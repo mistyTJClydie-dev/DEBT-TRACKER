@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Debt Tracker</title>
+<style>
+:root{--bg:#eef2f1;--card:#fff;--tx:#14211f;--mu:#5f6f6c;--bd:#d5dedc;--ac:#0f6b5c;--acx:#fff;--ok:#157a3d;--wa:#b45309;--er:#b91c1c;--tr:#dfe8e6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1716;--card:#18221f;--tx:#e6efed;--mu:#93a5a1;--bd:#2b3a37;--ac:#3fb8a2;--acx:#07130f;--ok:#4ade80;--wa:#fbbf24;--er:#f87171;--tr:#25332f}}
+:root[data-theme="dark"]{--bg:#0f1716;--card:#18221f;--tx:#e6efed;--mu:#93a5a1;--bd:#2b3a37;--ac:#3fb8a2;--acx:#07130f;--ok:#4ade80;--wa:#fbbf24;--er:#f87171;--tr:#25332f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:720px;margin:0 auto;padding:20px 16px 48px}
+h1{font:700 26px/1.2 Georgia,"Times New Roman",serif;margin:0 0 4px}
+h2{font:600 17px/1.3 Georgia,serif;margin:28px 0 10px}
+.sub{color:var(--mu);margin:0 0 18px;font-size:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sum div{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 12px}
+.sum small{display:block;color:var(--mu);font-size:12px}
+.sum b{font:700 19px/1.3 Georgia,serif;font-variant-numeric:tabular-nums;word-break:break-word}
+.bar{height:8px;background:var(--tr);border-radius:4px;overflow:hidden;margin:8px 0 4px}
+.bar i{display:block;height:100%;background:var(--ac)}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.mu{color:var(--mu);font-size:13px}
+.num{font-variant-numeric:tabular-nums}
+.alert{border-left:4px solid var(--wa);background:var(--card);border-radius:6px;padding:10px 14px;margin:14px 0;border-top:1px solid var(--bd);border-right:1px solid var(--bd);border-bottom:1px solid var(--bd)}
+.alert.over{border-left-color:var(--er)}
+.alert p{margin:2px 0}
+.tag{font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--bd);white-space:nowrap}
+.tag.over{color:var(--er);border-color:var(--er)}.tag.soon{color:var(--wa);border-color:var(--wa)}.tag.done{color:var(--ok);border-color:var(--ok)}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:7px 12px}
+button.p{background:var(--ac);color:var(--acx);border-color:var(--ac);font-weight:600}
+button.g{border:0;background:none;color:var(--mu);padding:4px 8px;font-size:13px;text-decoration:underline}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f label{display:block;font-size:13px;color:var(--mu)}
+.f .w{grid-column:1/-1}
+input,select{width:100%;font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}
+.chk{display:flex;gap:8px;align-items:center;color:var(--tx)!important}.chk input{width:auto}
+.hide{display:none}
+.hist{list-style:none;margin:0;padding:0}
+.hist li{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--bd)}
+.hist li:last-child{border:0}
+.empty{color:var(--mu);text-align:center;padding:18px}
+@media (max-width:480px){.sum b{font-size:16px}.f{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Debt tracker</h1>
+  <p class="sub">Log what you owe, record each payment, and see what’s due soon. Data stays in this browser.</p>
+
+  <div class="sum" id="sum"></div>
+  <div id="alerts"></div>
+
+  <div class="row"><h2>Your debts</h2><button class="p" id="addBtn">Add debt</button></div>
+
+  <section class="card hide" id="debtForm">
+    <div class="f">
+      <div class="w"><label>Debt name<input id="dName" placeholder="e.g. Credit card, Car loan, Juan"></label></div>
+      <div><label>Total amount owed<input id="dTotal" type="number" min="0" step="0.01" inputmode="decimal"></label></div>
+      <div><label>Amount already paid (optional)<input id="dPaid" type="number" min="0" step="0.01" inputmode="decimal"></label></div>
+      <div><label>Next due date<input id="dDue" type="date"></label></div>
+      <div><label>Repeats<select id="dFreq"><option value="monthly">Monthly</option><option value="biweekly">Every 2 weeks</option><option value="weekly">Weekly</option><option value="once">One time</option></select></label></div>
+      <div><label>Usual payment (optional)<input id="dMin" type="number" min="0" step="0.01" inputmode="decimal"></label></div>
+      <div><label>Currency symbol<input id="dCur" maxlength="4"></label></div>
+    </div>
+    <div class="acts"><button class="p" id="saveDebt">Save debt</button><button id="cancelDebt">Cancel</button></div>
+  </section>
+
+  <div id="debts"></div>
+
+  <h2>Log a payment</h2>
+  <section class="card" id="payForm">
+    <div class="f">
+      <div class="w"><label>Debt<select id="pDebt"></select></label></div>
+      <div><label>Amount paid<input id="pAmt" type="number" min="0" step="0.01" inputmode="decimal"></label></div>
+      <div><label>Date<input id="pDate" type="date"></label></div>
+      <div class="w"><label>Note (optional)<input id="pNote" placeholder="e.g. paid via bank transfer"></label></div>
+      <div class="w"><label class="chk"><input type="checkbox" id="pAdv" checked> This covers the current due date (move to the next one)</label></div>
+    </div>
+    <div class="acts"><button class="p" id="savePay">Save payment</button></div>
+  </section>
+
+  <h2>Payment history</h2>
+  <div class="card"><ul class="hist" id="hist"></ul></div>
+</main>
+
+<script>
+(function(){
+var KEY="debt-tracker-v1";
+var S={debts:[],pays:[],cur:"₱"};
+try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);if(p&&p.debts&&p.pays){S=p;S.cur=S.cur||"₱";}}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function iso(d){var m=d.getMonth()+1,dd=d.getDate();return d.getFullYear()+"-"+(m<10?"0":"")+m+"-"+(dd<10?"0":"")+dd;}
+function today(){return iso(new Date());}
+function money(n){return S.cur+(Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+function days(due){var a=new Date(today()+"T00:00:00"),b=new Date(due+"T00:00:00");return Math.round((b-a)/864e5);}
+function fmt(d){return new Date(d+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});}
+function nextDue(d,f){var x=new Date(d+"T00:00:00");if(f==="weekly")x.setDate(x.getDate()+7);else if(f==="biweekly")x.setDate(x.getDate()+14);else{var day=x.getDate();x.setDate(1);x.setMonth(x.getMonth()+1);var last=new Date(x.getFullYear(),x.getMonth()+1,0).getDate();x.setDate(Math.min(day,last));}return iso(x);}
+function paid(id){return S.pays.filter(function(p){return p.debt===id;}).reduce(function(a,p){return a+p.amt;},0);}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+
+function render(){
+  var tot=0,pd=0;
+  S.debts.forEach(function(d){tot+=d.total;pd+=Math.min(paid(d.id),d.total);});
+  var rem=Math.max(tot-pd,0),pct=tot?Math.round(pd/tot*100):0;
+  $("sum").innerHTML='<div><small>Total debt</small><b>'+money(tot)+'</b></div><div><small>Paid so far</small><b>'+money(pd)+'</b></div><div><small>Remaining</small><b>'+money(rem)+'</b></div>';
+  var al="";
+  S.debts.slice().filter(function(d){return d.due&&paid(d.id)<d.total;}).sort(function(a,b){return a.due<b.due?-1:1;}).forEach(function(d){
+    var n=days(d.due);
+    if(n<0)al+='<div class="alert over"><p><b>'+esc(d.name)+'</b> was due '+fmt(d.due)+' ('+(-n)+' day'+(n===-1?"":"s")+' ago)'+(d.min?' — usual payment '+money(d.min):'')+'</p></div>';
+    else if(n<=7)al+='<div class="alert"><p><b>'+esc(d.name)+'</b> is due '+(n===0?"today":n===1?"tomorrow":"in "+n+" days ("+fmt(d.due)+")")+(d.min?' — usual payment '+money(d.min):'')+'</p></div>';
+  });
+  $("alerts").innerHTML=al;
+  var h="";
+  S.debts.forEach(function(d){
+    var p=paid(d.id),r=Math.max(d.total-p,0),pc=d.total?Math.min(100,Math.round(p/d.total*100)):0,tag="";
+    if(r<=0)tag='<span class="tag done">Paid off</span>';
+    else if(d.due){var n=days(d.due);tag='<span class="tag '+(n<0?"over":n<=7?"soon":"")+'">'+(n<0?"Overdue":"Due "+fmt(d.due))+'</span>';}
+    h+='<div class="card"><div class="row"><b>'+esc(d.name)+'</b>'+tag+'</div><div class="bar"><i style="width:'+pc+'%"></i></div><div class="row"><span class="mu num">'+money(p)+' of '+money(d.total)+' paid ('+pc+'%)</span><b class="num">'+money(r)+' left</b></div><div class="acts">'+(r>0?'<button class="p" data-pay="'+d.id+'">Log payment</button>':'')+'<button class="g" data-del="'+d.id+'">Delete</button></div></div>';
+  });
+  $("debts").innerHTML=h||'<div class="card empty">No debts yet. Tap “Add debt” to start tracking.</div>';
+  var cur=$("pDebt").value;
+  $("pDebt").innerHTML=S.debts.map(function(d){return '<option value="'+d.id+'">'+esc(d.name)+'</option>';}).join("")||'<option value="">Add a debt first</option>';
+  if(cur)$("pDebt").value=cur;
+  var hs=S.pays.slice().sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:0;}).slice(0,30);
+  $("hist").innerHTML=hs.map(function(p){var d=S.debts.filter(function(x){return x.id===p.debt;})[0];return '<li><span><b>'+esc(d?d.name:"Deleted debt")+'</b><br><span class="mu">'+fmt(p.date)+(p.note?" · "+esc(p.note):"")+'</span></span><span class="num"><b>'+money(p.amt)+'</b> <button class="g" data-undo="'+p.id+'">Remove</button></span></li>';}).join("")||'<li class="empty" style="display:block">No payments logged yet.</li>';
+}
+
+$("pDate").value=today();$("dCur").value=S.cur;
+$("addBtn").onclick=function(){$("debtForm").classList.toggle("hide");$("dDue").value=today();$("dName").focus();};
+$("cancelDebt").onclick=function(){$("debtForm").classList.add("hide");};
+$("saveDebt").onclick=function(){
+  var name=$("dName").value.trim(),total=parseFloat($("dTotal").value);
+  if(!name||!(total>0)){alert("Enter a name and a total amount greater than 0.");return;}
+  S.cur=$("dCur").value.trim()||"₱";
+  var freq=$("dFreq").value,d={id:uid(),name:name,total:total,due:$("dDue").value||"",freq:freq,min:parseFloat($("dMin").value)||0};
+  S.debts.push(d);
+  var already=parseFloat($("dPaid").value);
+  if(already>0)S.pays.push({id:uid(),debt:d.id,amt:already,date:today(),note:"Earlier payments"});
+  ["dName","dTotal","dPaid","dMin"].forEach(function(i){$(i).value="";});
+  $("debtForm").classList.add("hide");save();render();
+};
+$("savePay").onclick=function(){
+  var id=$("pDebt").value,amt=parseFloat($("pAmt").value),d=S.debts.filter(function(x){return x.id===id;})[0];
+  if(!d||!(amt>0)){alert("Pick a debt and enter an amount greater than 0.");return;}
+  S.pays.push({id:uid(),debt:id,amt:amt,date:$("pDate").value||today(),note:$("pNote").value.trim()});
+  if($("pAdv").checked&&d.due&&d.freq!=="once")d.due=nextDue(d.due,d.freq);
+  $("pAmt").value="";$("pNote").value="";save();render();
+};
+document.addEventListener("click",function(e){
+  var t=e.target;
+  if(t.dataset.pay){$("pDebt").value=t.dataset.pay;var d=S.debts.filter(function(x){return x.id===t.dataset.pay;})[0];if(d&&d.min)$("pAmt").value=d.min;$("payForm").scrollIntoView({behavior:"smooth"});$("pAmt").focus();}
+  if(t.dataset.del&&confirm("Delete this debt and its payment history?")){S.debts=S.debts.filter(function(x){return x.id!==t.dataset.del;});S.pays=S.pays.filter(function(x){return x.debt!==t.dataset.del;});save();render();}
+  if(t.dataset.undo){S.pays=S.pays.filter(function(x){return x.id!==t.dataset.undo;});save();render();}
+});
+render();
+})();
+</script>
+</body>
+</html>
